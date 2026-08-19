@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project purpose
 
-A learning playground for using ClickHouse from Java. A Spring Boot REST API inserts, queries, aggregates, and "updates" event/log-analytics data in ClickHouse. See `TUTORIAL.md` for the full concept walkthrough (why ClickHouse has no cheap row UPDATE, the ReplacingMergeTree pattern vs. `ALTER TABLE ... UPDATE` mutations, etc.) — read it before making schema or repository changes, since the code intentionally demonstrates specific ClickHouse idioms rather than generic CRUD.
+A learning playground for using ClickHouse from Java. A Spring Boot REST API inserts, queries, aggregates, and "updates" event/log-analytics data in ClickHouse. See `TUTORIAL.md` for the full concept walkthrough (why ClickHouse has no cheap row UPDATE, the ReplacingMergeTree pattern vs. `ALTER TABLE ... UPDATE` mutations, etc.) — read it before schema or repository changes, since the code demonstrates specific ClickHouse idioms rather than generic CRUD. A third transport, GraphQL, has its own `GRAPHQL_TUTORIAL.md`.
 
 ## Java toolchain
 
@@ -49,12 +49,13 @@ Run a single test class or method:
 - **`config/`** — `ClickHouseProperties` (bound from `clickhouse.*` in `application.yml`) and `ClickHouseClientConfig`, which builds the `com.clickhouse.client.api.Client` bean used everywhere else.
 - **`event/`** — the one vertical slice in this app: `EventController` (REST) → `EventService` (orchestration) → `EventRepository` (SQL against ClickHouse via `Client`), plus `event/dto` request/response records.
 - **`EventGrpcService`** — a second, alternate transport onto the same `EventService`, exposed over gRPC (port 9090) instead of REST. Contract lives in `src/main/proto/event.proto`; see `TUTORIAL.md` §7 for the full walkthrough (unary vs. server-streaming RPCs, `grpcurl` usage, in-process test client).
-- **`schema/SchemaInitializer`** — an `ApplicationRunner` that creates the database/table on startup. This is deliberate: it means local dev (docker-compose) and tests (Testcontainers) provision schema through the exact same code path, with no separate SQL init script to keep in sync.
+- **`EventGraphQlController`** — a third transport onto the same `EventService`, exposed over GraphQL (`/graphql`, GraphiQL at `/graphiql`) instead of REST/gRPC. Schema lives in `src/main/resources/graphql/schema.graphqls`; see `GRAPHQL_TUTORIAL.md` for the full walkthrough (schema-first design, query vs. mutation, `[PropertyEntry!]!` in place of a map scalar).
+- **`schema/SchemaInitializer`** — an `ApplicationRunner` that creates the database/table on startup, so local dev (docker-compose) and tests (Testcontainers) provision schema through the same code path, with no separate SQL init script to keep in sync.
 - **`events` table** — `ReplacingMergeTree(updated_at)` ordered by `event_id`. `properties` is stored as a JSON string column (Jackson-serialized at the repository boundary), not ClickHouse's native `Map` type.
 - **Two distinct "update" code paths**, both intentional (see `TUTORIAL.md` §2 for why):
   - `EventService.replaceVersion` / `PUT /api/events/{id}` — inserts a new versioned row; relies on `ReplacingMergeTree` + `FINAL` reads to reconcile. The idiomatic, cheap ClickHouse pattern.
   - `EventRepository.mutateEventType` / `PATCH /api/events/{id}/mutate` — a literal `ALTER TABLE ... UPDATE` mutation, run with `mutations_sync = 1` for demo/test determinism. Heavyweight; kept only as a contrast to the pattern above.
-- **`EventRepository`** builds plain SQL text (`client.queryAll(sql)`) rather than using POJO/row-binary marshalling, so the ClickHouse statements stay readable as teaching material. String values are manually escaped (see `escape()`) — this is a single-user playground, not a template for production SQL construction.
+- **`EventRepository`** builds plain SQL text (`client.queryAll(sql)`) rather than using POJO/row-binary marshalling, so statements stay readable as teaching material. String values are manually escaped (see `escape()`) — this is a single-user playground, not a template for production SQL construction.
 - Reads use `... FROM events FINAL ...` throughout to reconcile ReplacingMergeTree duplicates at query time.
 
 ## Testing
