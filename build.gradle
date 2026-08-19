@@ -43,6 +43,7 @@ dependencies {
     testImplementation "net.devh:grpc-client-spring-boot-starter:${grpcSpringBootVersion}"
     testImplementation "io.grpc:grpc-inprocess:${grpcVersion}"
     testImplementation 'org.springframework.graphql:spring-graphql-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
