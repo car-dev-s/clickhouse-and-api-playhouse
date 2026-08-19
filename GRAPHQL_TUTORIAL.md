@@ -175,4 +175,4 @@ Unlike REST's `POST /api/events`, this is still the same `/graphql` endpoint eve
 
 `EventGraphQlControllerIT` follows the same pattern as `EventControllerIT` (`TUTORIAL.md` §6): it extends `ClickHouseIntegrationTest` and runs against a real, Testcontainers-backed ClickHouse instance, no mocking of ClickHouse behavior. In place of `TestRestTemplate`, it uses Spring for GraphQL's `HttpGraphQlTester` (`@Autowired`) to send documents and assert on response paths (`.path("createEvent.eventId")`) and errors (`.errors().expect(...)`) directly, without needing to hand-parse a JSON body.
 
-For the REST vs. gRPC vs. GraphQL comparison, see the GraphQL Field Guide artifact.
+For the REST vs. gRPC vs. GraphQL comparison, see the [GraphQL Field Guide artifact](https://claude.ai/code/artifact/526fad4d-a8e3-4ab5-b28a-e7f84c2b0f10).
