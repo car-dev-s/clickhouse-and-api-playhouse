@@ -1,6 +1,6 @@
 # ClickHouse + Java/Spring Boot Tutorial
 
-This project is a hands-on playground for learning how to use ClickHouse from a Java (Spring Boot) application. It models a small event/log analytics API: events are inserted, queried, aggregated, and "updated" through a REST API backed by a real ClickHouse instance.
+This project is a hands-on playground for learning how to use ClickHouse from a Java (Spring Boot) application. It models a small event/log analytics API: events are inserted, queried, aggregated, and "updated" through a REST API backed by a real ClickHouse instance. A third transport, GraphQL, is covered separately in `GRAPHQL_TUTORIAL.md`.
 
 ## 1. What is ClickHouse, and when do you reach for it?
 
