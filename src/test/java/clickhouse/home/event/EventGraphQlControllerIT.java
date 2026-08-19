@@ -3,9 +3,9 @@ package clickhouse.home.event;
 import clickhouse.home.support.ClickHouseIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.graphql.test.tester.GraphQlTester;
 import org.springframework.graphql.test.tester.HttpGraphQlTester;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -26,19 +26,18 @@ class EventGraphQlControllerIT extends ClickHouseIntegrationTest {
                 }
                 """;
 
-        String eventId = graphQlTester.document(createMutation).execute()
-                .path("createEvent.eventId").entity(String.class).get();
-
-        graphQlTester.document(createMutation).execute()
-                .path("createEvent.properties[0].key").entity(String.class).isEqualTo("sku");
+        var createResponse = graphQlTester.document(createMutation).execute();
+        String eventId = createResponse.path("createEvent.eventId").entity(String.class).get();
+        createResponse.path("createEvent.properties[0].key").entity(String.class).isEqualTo("sku");
 
         String eventQuery = """
                 query($id: ID!) {
-                  event(eventId: $id) { eventId userId eventType }
+                  event(eventId: $id) { eventId userId eventType createdAt updatedAt }
                 }
                 """;
-        graphQlTester.document(eventQuery).variable("id", eventId).execute()
-                .path("event.userId").entity(String.class).isEqualTo("user-gql-1");
+        var eventResponse = graphQlTester.document(eventQuery).variable("id", eventId).execute();
+        eventResponse.path("event.userId").entity(String.class).isEqualTo("user-gql-1");
+        eventResponse.path("event.createdAt").entity(String.class).satisfies(Instant::parse);
 
         String updateMutation = """
                 mutation($id: ID!) {
@@ -95,6 +94,18 @@ class EventGraphQlControllerIT extends ClickHouseIntegrationTest {
         List<String> users = graphQlTester.document(listQuery).execute()
                 .path("events[*].userId").entityList(String.class).get();
         assertThat(users).hasSizeGreaterThanOrEqualTo(2);
+
+        String listWithRangeQuery = """
+                query($from: String!, $to: String!) {
+                  events(eventType: "batch_gql", from: $from, to: $to, limit: 10) { userId }
+                }
+                """;
+        String from = Instant.now().minusSeconds(60).toString();
+        String to = Instant.now().plusSeconds(60).toString();
+        List<String> rangeFilteredUsers = graphQlTester.document(listWithRangeQuery)
+                .variable("from", from).variable("to", to).execute()
+                .path("events[*].userId").entityList(String.class).get();
+        assertThat(rangeFilteredUsers).hasSizeGreaterThanOrEqualTo(2);
 
         String statsQuery = """
                 query {

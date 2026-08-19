@@ -12,12 +12,14 @@ import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandle
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.graphql.data.method.annotation.SchemaMapping;
+import org.springframework.graphql.execution.ErrorType;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,8 +89,12 @@ public class EventGraphQlController {
 
     @GraphQlExceptionHandler
     public GraphQLError handle(ResponseStatusException ex, DataFetchingEnvironment env) {
+        ErrorType errorType = ex.getStatusCode() == HttpStatus.NOT_FOUND
+                ? ErrorType.NOT_FOUND
+                : ErrorType.INTERNAL_ERROR;
         return GraphqlErrorBuilder.newError(env)
-                .message(ex.getReason())
+                .errorType(errorType)
+                .message(ex.getReason() != null ? ex.getReason() : ex.getMessage())
                 .build();
     }
 
@@ -100,7 +106,7 @@ public class EventGraphQlController {
     @SuppressWarnings("unchecked")
     private Map<String, String> toPropertiesMap(Map<String, Object> input) {
         List<Map<String, String>> entries = (List<Map<String, String>>) input.get("properties");
-        Map<String, String> properties = new HashMap<>();
+        Map<String, String> properties = new LinkedHashMap<>();
         if (entries != null) {
             for (Map<String, String> entry : entries) {
                 properties.put(entry.get("key"), entry.get("value"));
