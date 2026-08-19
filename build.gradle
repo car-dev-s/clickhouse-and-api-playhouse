@@ -26,6 +26,7 @@ ext {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-graphql'
     implementation 'com.clickhouse:client-v2:0.10.0'
 
     implementation "net.devh:grpc-spring-boot-starter:${grpcSpringBootVersion}"
@@ -41,6 +42,7 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-clickhouse:' + testcontainersVersion
     testImplementation "net.devh:grpc-client-spring-boot-starter:${grpcSpringBootVersion}"
     testImplementation "io.grpc:grpc-inprocess:${grpcVersion}"
+    testImplementation 'org.springframework.graphql:spring-graphql-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

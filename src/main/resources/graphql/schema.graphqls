@@ -1,0 +1,56 @@
+type Event {
+    eventId: ID!
+    eventType: String!
+    userId: String!
+    properties: [PropertyEntry!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type PropertyEntry {
+    key: String!
+    value: String!
+}
+
+input PropertyEntryInput {
+    key: String!
+    value: String!
+}
+
+type EventTypeCount {
+    eventType: String!
+    count: Int!
+}
+
+type EventStats {
+    counts: [EventTypeCount!]!
+}
+
+input CreateEventInput {
+    eventType: String!
+    userId: String!
+    properties: [PropertyEntryInput!]
+}
+
+input UpdateEventInput {
+    eventType: String!
+    userId: String!
+    properties: [PropertyEntryInput!]
+}
+
+input MutateEventInput {
+    eventType: String!
+}
+
+type Query {
+    event(eventId: ID!): Event
+    events(eventType: String, userId: String, from: String, to: String, limit: Int = 50, offset: Int = 0): [Event!]!
+    eventStats(from: String, to: String): EventStats!
+}
+
+type Mutation {
+    createEvent(input: CreateEventInput!): Event!
+    createEvents(inputs: [CreateEventInput!]!): [Event!]!
+    updateEvent(eventId: ID!, input: UpdateEventInput!): Event!
+    mutateEvent(eventId: ID!, input: MutateEventInput!): Event!
+}
