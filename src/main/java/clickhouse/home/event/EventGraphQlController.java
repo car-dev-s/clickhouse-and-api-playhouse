@@ -11,6 +11,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.SchemaMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -79,6 +80,7 @@ public class EventGraphQlController {
     }
 
     /** Maps every {@code Event.properties} field access to the schema's [PropertyEntry!]! shape. */
+    @SchemaMapping(typeName = "Event")
     public List<PropertyEntry> properties(Event event) {
         return toPropertyEntries(event.properties());
     }
