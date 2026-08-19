@@ -8,10 +8,11 @@ import clickhouse.home.grpc.event.ListEventsRequestProto;
 import com.google.protobuf.Timestamp;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Same domain calls as {@link EventController}, exposed over gRPC instead of REST. Delegates to
@@ -21,6 +22,8 @@ import java.util.Map;
 @GrpcService
 public class EventGrpcService extends EventGrpcServiceGrpc.EventGrpcServiceImplBase {
 
+    private static final Logger log = LoggerFactory.getLogger(EventGrpcService.class);
+
     private final EventService service;
 
     public EventGrpcService(EventService service) {
@@ -29,6 +32,7 @@ public class EventGrpcService extends EventGrpcServiceGrpc.EventGrpcServiceImplB
 
     @Override
     public void createEvent(CreateEventRequestProto request, StreamObserver<EventMessage> responseObserver) {
+        log.debug("gRPC createEvent eventType={} userId={}", request.getEventType(), request.getUserId());
         Event event = service.create(new CreateEventRequest(
                 request.getEventType(), request.getUserId(), request.getPropertiesMap()));
         responseObserver.onNext(toMessage(event));
@@ -43,6 +47,8 @@ public class EventGrpcService extends EventGrpcServiceGrpc.EventGrpcServiceImplB
         Instant to = request.hasTo() ? toInstant(request.getTo()) : null;
         int limit = request.getLimit() > 0 ? request.getLimit() : 50;
 
+        log.debug("gRPC listEvents eventType={} userId={} from={} to={} limit={} offset={}",
+                eventType, userId, from, to, limit, request.getOffset());
         List<Event> events = service.find(eventType, userId, from, to, limit, request.getOffset());
         for (Event event : events) {
             responseObserver.onNext(toMessage(event));
