@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package clickhouse.home.event;
+
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "clickhouse.home.grpc.event";
+option java_outer_classname = "EventProtos";
+
+// Same domain as EventController/EventService, exposed over gRPC instead of REST.
+// See TUTORIAL.md for why the transport is different but the underlying
+// ClickHouse read/write patterns (FINAL reads, ReplacingMergeTree inserts) are not.
+service EventGrpcService {
+  // Unary RPC: one request, one response - equivalent to POST /api/events.
+  rpc CreateEvent(CreateEventRequestProto) returns (EventMessage);
+
+  // Server-streaming RPC: one request, a stream of responses - equivalent to
+  // GET /api/events, but rows are pushed to the client as ClickHouse returns them
+  // instead of being buffered into one JSON array.
+  rpc ListEvents(ListEventsRequestProto) returns (stream EventMessage);
+}
+
+message EventMessage {
+  string event_id = 1;
+  string event_type = 2;
+  string user_id = 3;
+  map<string, string> properties = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message CreateEventRequestProto {
+  string event_type = 1;
+  string user_id = 2;
+  map<string, string> properties = 3;
+}
+
+message ListEventsRequestProto {
+  // All fields optional; unset means "no filter", mirroring the REST endpoint's
+  // optional @RequestParams. Protobuf3 has no null, so callers send "" / 0 to skip.
+  string event_type = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp from = 3;
+  google.protobuf.Timestamp to = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}

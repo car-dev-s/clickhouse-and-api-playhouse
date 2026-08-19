@@ -1,0 +1,28 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: clickhouse-playground
+    ports:
+      - "8123:8123" # HTTP interface (used by the app and curl)
+      - "9000:9000" # native protocol (used by clickhouse-client)
+    environment:
+      CLICKHOUSE_DB: playground
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  clickhouse-ui:
+    image: spoonest/clickhouse-tabix-web-client
+    container_name: clickhouse-playground-ui
+    ports:
+      - "8124:80"
+    depends_on:
+      - clickhouse
+
+volumes:
+  clickhouse-data:
